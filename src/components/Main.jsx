@@ -1,18 +1,34 @@
 import axios from 'axios';
-import  { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import requests from '../Request';
 
 const Main = () => {
   const [movies, setMovies] = useState([]);
-
-  const movie = movies[Math.floor(Math.random() * movies.length)];
+  const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    axios.get(requests.requestPopular).then((response) => {
-      setMovies(response.data.results);
-    });
-  }, []);
-  //   console.log(movie);
+    const fetchMovies = async () => {
+      try {
+        const response = await axios.get(requests.requestPopular);
+        setMovies(response.data.results);
+        setIndex(Math.floor(Math.random() * response.data.results.length)); // Initial random movie
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchMovies();
+
+    const interval = setInterval(() => {
+      setIndex(prevIndex => {
+        const newIndex = Math.floor(Math.random() * movies.length);
+        return newIndex !== prevIndex ? newIndex : (newIndex + 1) % movies.length; // Ensure a new movie is shown
+      });
+    }, 5000); // Change movie every 5 seconds
+
+    return () => clearInterval(interval); // Clean up the interval on component unmount
+  }, [movies.length]); // Depend on movies.length to ensure interval resets correctly if movie list changes
+
+  const movie = movies[index];
 
   const truncateString = (str, num) => {
     if (str?.length > num) {
